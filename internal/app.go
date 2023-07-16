@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	coresdk "github.com/goverland-labs/core-web-sdk"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
 	"github.com/nats-io/nats.go"
 	"github.com/s-larionov/process-manager"
@@ -32,6 +33,7 @@ type Application struct {
 	subscriptions inboxapi.SubscriptionClient
 	feedRepo      *feed.Repo
 	feedService   *feed.Service
+	coreSDK       *coresdk.Client
 }
 
 func NewApplication(cfg config.App) (*Application, error) {
@@ -63,6 +65,7 @@ func (a *Application) bootstrap() error {
 		a.initDatabase,
 		a.initNats,
 		a.initInboxAPI,
+		a.initCodeSDK,
 		a.initServices,
 
 		// Init Workers: Application
@@ -133,10 +136,7 @@ func (a *Application) initNats() error {
 }
 
 func (a *Application) initInboxAPI() error {
-	conn, err := grpc.Dial(
-		a.cfg.Inbox.StorageAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	conn, err := grpc.Dial(a.cfg.Inbox.StorageAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("create connection with storage server: %v", err)
 	}
@@ -146,8 +146,14 @@ func (a *Application) initInboxAPI() error {
 	return nil
 }
 
+func (a *Application) initCodeSDK() error {
+	a.coreSDK = coresdk.NewClient(a.cfg.Core.CoreURL)
+
+	return nil
+}
+
 func (a *Application) initServices() error {
-	a.feedService = feed.NewService(a.feedRepo, a.subscriptions)
+	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK)
 
 	return nil
 }

@@ -60,7 +60,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 	}
 
 	cl := clause.OnConflict{
-		Columns: []clause.Column{{Name: "dao_id"}, {Name: "proposal_id"}},
+		Columns: []clause.Column{{Name: "subscriber_id"}, {Name: "dao_id"}, {Name: "proposal_id"}},
 		DoUpdates: clause.Set{
 			{Column: clause.Column{Name: "snapshot"}, Value: item.Snapshot},
 			{Column: clause.Column{Name: "timeline"}, Value: timeline},
@@ -77,7 +77,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		})
 	}
 
-	query = tx.Clauses(cl).Create(item)
+	query = tx.Debug().Clauses(cl).Create(item)
 
 	if query.Error != nil {
 		tx.Rollback()

@@ -7,4 +7,5 @@ type App struct {
 	Database   Database
 	Nats       Nats
 	Inbox      Inbox
+	Core       Core
 }

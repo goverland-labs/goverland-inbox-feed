@@ -44,7 +44,7 @@ func (t Timeline) Equal(updated Timeline) bool {
 
 type Item struct {
 	ID           uuid.UUID `gorm:"primary_key" json:"id"`
-	SubscriberID uuid.UUID `gorm:"index"`
+	SubscriberID uuid.UUID `gorm:"primary_key;uniqueIndex:feed_item_dao_proposal_uidx"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt  `gorm:"index"`

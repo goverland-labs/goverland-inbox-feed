@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Added prefill feed for empty subscribers
+
 ### Changed
 - Mark unread only on timeline change
 
