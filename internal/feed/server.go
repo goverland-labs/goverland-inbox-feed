@@ -53,13 +53,6 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		pageLimit = int(req.GetLimit())
 	}
 
-	var pageOffset int
-	if req.GetOffset() > 0 {
-		pageOffset = int(req.GetOffset())
-	}
-
-	filters = append(filters, WithLimit(pageLimit, pageOffset))
-
 	totalCount, err := s.service.CountByFilters(ctx, subscriberID, filters)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to get total count of feed events")
@@ -79,6 +72,13 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		}
 		totalCount = count
 	}
+
+	var pageOffset int
+	if req.GetOffset() > 0 {
+		pageOffset = int(req.GetOffset())
+	}
+
+	filters = append(filters, WithLimit(pageLimit, pageOffset))
 
 	unreadCount, err := s.service.CountByFilters(ctx, subscriberID, append(filters, FilterByReadStatus(helpers.Ptr(false))))
 	if err != nil {

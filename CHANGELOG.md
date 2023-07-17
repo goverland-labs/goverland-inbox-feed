@@ -13,6 +13,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Mark unread only on timeline change
 
+### Fixed
+- Fixed ordering of feed items
+
 ## [0.0.1] - 2023-07-15
 
 ### Added

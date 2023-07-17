@@ -74,3 +74,14 @@ func SortedByCreatedAtDesc() Filter {
 		return query.Order("created_at desc")
 	}
 }
+
+func SortedByUpdatedAtDesc() Filter {
+	var (
+		dummy Item
+		_     = dummy.UpdatedAt
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		return query.Order("updated_at desc")
+	}
+}
