@@ -69,7 +69,8 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		},
 	}
 
-	if !isArchived {
+	isTimelineUpdated := found.Timeline.Equal(item.Timeline)
+	if !isArchived && isTimelineUpdated {
 		cl.DoUpdates = append(cl.DoUpdates, clause.Assignment{
 			Column: clause.Column{Name: "read_at"},
 			Value:  gorm.Expr("NULL"),
