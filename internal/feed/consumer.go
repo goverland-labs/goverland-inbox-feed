@@ -87,11 +87,11 @@ func convertPayloadToInternal(payload inbox.FeedPayload) Item {
 	}
 }
 
-func convertPayloadTimelineToInternal(timeline []inbox.TimelineItem) []Timeline {
-	converted := make([]Timeline, 0, len(timeline))
+func convertPayloadTimelineToInternal(timeline []inbox.TimelineItem) Timeline {
+	converted := make(Timeline, 0, len(timeline))
 
 	for _, t := range timeline {
-		converted = append(converted, Timeline{
+		converted = append(converted, TimelineInfo{
 			CreatedAt: t.CreatedAt,
 			Action:    convertPayloadActionToInternal(t.Action),
 		})

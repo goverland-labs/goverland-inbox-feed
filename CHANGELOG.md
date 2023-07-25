@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Mark unread only on timeline change
+
 ## [0.0.1] - 2023-07-15
 
 ### Added

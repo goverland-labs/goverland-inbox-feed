@@ -2,6 +2,7 @@ package feed
 
 import (
 	"encoding/json"
+	"reflect"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,9 +27,19 @@ type Type string
 
 type Action string
 
-type Timeline struct {
+type TimelineInfo struct {
 	CreatedAt time.Time `json:"created_at"`
 	Action    Action    `json:"action"`
+}
+
+type Timeline []TimelineInfo
+
+func (t Timeline) Equal(updated Timeline) bool {
+	if len(t) != len(updated) {
+		return false
+	}
+
+	return reflect.DeepEqual(t, updated)
 }
 
 type Item struct {
@@ -45,5 +56,5 @@ type Item struct {
 	Type         Type            `json:"type"`
 	Action       Action          `json:"action"`
 	Snapshot     json.RawMessage `gorm:"type:jsonb;serializer:json" json:"dao,omitempty"`
-	Timeline     []Timeline      `gorm:"type:jsonb;serializer:json" json:"timeline"`
+	Timeline     Timeline        `gorm:"type:jsonb;serializer:json" json:"timeline"`
 }
