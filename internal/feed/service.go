@@ -159,7 +159,7 @@ func (s *Service) PrefillFeed(ctx context.Context, subscriberID uuid.UUID) error
 }
 
 func convertCoreFeedItemToInternal(subscriberID uuid.UUID, item dao.FeedItem) *Item {
-	var timeline []Timeline
+	var timeline Timeline
 	err := json.Unmarshal(item.Timeline, &timeline)
 	if err != nil {
 		log.Warn().Err(err).Str("feed_id", item.ID.String()).Msg("unable to unmarshal feed timeline")
