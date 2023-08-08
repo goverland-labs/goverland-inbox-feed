@@ -53,7 +53,7 @@ func TestModel_Equal(t *testing.T) {
 					Action:    "action",
 				},
 			},
-			equal: false,
+			equal: true,
 		},
 		"different date": {
 			original: Timeline{

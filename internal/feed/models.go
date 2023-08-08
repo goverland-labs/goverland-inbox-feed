@@ -3,6 +3,7 @@ package feed
 import (
 	"encoding/json"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,10 +35,23 @@ type TimelineInfo struct {
 
 type Timeline []TimelineInfo
 
+func (t *Timeline) Sort() {
+	if t == nil || len(*t) == 0 {
+		return
+	}
+
+	sort.SliceStable(*t, func(i, j int) bool {
+		return (*t)[i].CreatedAt.Before((*t)[j].CreatedAt)
+	})
+}
+
 func (t Timeline) Equal(updated Timeline) bool {
 	if len(t) != len(updated) {
 		return false
 	}
+
+	t.Sort()
+	updated.Sort()
 
 	return reflect.DeepEqual(t, updated)
 }

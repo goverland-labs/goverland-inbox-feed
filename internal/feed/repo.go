@@ -48,11 +48,6 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		return query.Error
 	}
 
-	isArchived := false
-	if query.RowsAffected > 0 {
-		isArchived = found.ArchivedAt != nil
-	}
-
 	timeline, err := json.Marshal(item.Timeline)
 	if err != nil {
 		tx.Rollback()
@@ -70,7 +65,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 	}
 
 	isTimelineUpdated := found.Timeline.Equal(item.Timeline)
-	if !isArchived && isTimelineUpdated {
+	if isTimelineUpdated {
 		cl.DoUpdates = append(cl.DoUpdates, clause.Assignment{
 			Column: clause.Column{Name: "read_at"},
 			Value:  gorm.Expr("NULL"),
