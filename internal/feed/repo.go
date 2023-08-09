@@ -31,6 +31,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		_ = item.CreatedAt
 	)
 
+	// nolint:godox
 	// FIXME: Reset readAt if item was updated
 	// FIXME: Don't react if archivedAt is not null
 

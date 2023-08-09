@@ -106,6 +106,7 @@ var payloadActionMap = map[inbox.TimelineAction]Action{
 	inbox.ProposalCreated:             ProposalCreated,
 	inbox.ProposalUpdated:             ProposalUpdated,
 	inbox.ProposalVotingStartsSoon:    ProposalVotingStartsSoon,
+	inbox.ProposalVotingEndsSoon:      ProposalVotingEndsSoon,
 	inbox.ProposalVotingStarted:       ProposalVotingStarted,
 	inbox.ProposalVotingQuorumReached: ProposalVotingQuorumReached,
 	inbox.ProposalVotingEnded:         ProposalVotingEnded,

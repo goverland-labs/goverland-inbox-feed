@@ -11,11 +11,16 @@ import (
 	coresdk "github.com/goverland-labs/core-web-sdk"
 	"github.com/goverland-labs/core-web-sdk/dao"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
+	events "github.com/goverland-labs/platform-events/events/inbox"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 )
 
 const maxPrefillElements = 10
+
+type Publisher interface {
+	PublishJSON(ctx context.Context, subject string, obj any) error
+}
 
 type SubscriptionsFinder interface {
 	FindSubscribers(ctx context.Context, in *inboxapi.FindSubscribersRequest, opts ...grpc.CallOption) (*inboxapi.UserList, error)
@@ -26,17 +31,24 @@ type Service struct {
 	repo          *Repo
 	subscriptions SubscriptionsFinder
 	sdk           *coresdk.Client
+	publisher     Publisher
 }
 
-func NewService(repo *Repo, subscriptions SubscriptionsFinder, sdk *coresdk.Client) *Service {
+func NewService(repo *Repo, subscriptions SubscriptionsFinder, sdk *coresdk.Client, p Publisher) *Service {
 	return &Service{
 		repo:          repo,
 		subscriptions: subscriptions,
 		sdk:           sdk,
+		publisher:     p,
 	}
 }
 
 func (s *Service) Process(ctx context.Context, item Item) error {
+	// skip dao objects from feed
+	if item.DAO() {
+		return nil
+	}
+
 	resp, err := s.subscriptions.FindSubscribers(ctx, &inboxapi.FindSubscribersRequest{
 		DaoId: item.DaoID.String(),
 	})
@@ -44,6 +56,7 @@ func (s *Service) Process(ctx context.Context, item Item) error {
 		return err
 	}
 
+	var pushTitle, pushBody string
 	for _, sub := range resp.Users {
 		subscriberID, err := uuid.Parse(sub.GetUserId())
 		if err != nil {
@@ -61,10 +74,55 @@ func (s *Service) Process(ctx context.Context, item Item) error {
 			return fmt.Errorf("unable to save feed item '%s' for subscriber '%s': %w", personalized.ID, sub.GetUserId(), err)
 		}
 
-		// TODO: Send push notification
+		if !item.AllowSending() {
+			continue
+		}
+
+		if pushTitle == "" {
+			di, err := s.sdk.GetDao(ctx, item.DaoID)
+			if err != nil {
+				log.Error().Err(err).Msgf("core client: get dao: %s: %s", item.DaoID.String(), err.Error())
+				continue
+			}
+			pushTitle = fmt.Sprintf("%s: %s", di.Name, convertAction(item.Action))
+		}
+
+		if pushBody == "" {
+			pr, err := s.sdk.GetProposal(ctx, item.ProposalID)
+			if err != nil {
+				log.Error().Err(err).Msgf("core client: get proposal: %s: %s", item.ProposalID, err.Error())
+				continue
+			}
+			pushBody = pr.Title
+		}
+
+		// todo: send image url here
+		if err = s.publisher.PublishJSON(ctx, events.SubjectPushCreated, events.PushPayload{
+			Title:  pushTitle,
+			Body:   pushBody,
+			UserID: subscriberID,
+		}); err != nil {
+			log.Error().
+				Err(err).
+				Fields(map[string]string{"user_id": subscriberID.String()}).
+				Msg("publish push notification")
+		}
 	}
 
 	return nil
+}
+
+func convertAction(action Action) string {
+	switch action {
+	case ProposalCreated:
+		return "New proposal created"
+	case ProposalVotingQuorumReached:
+		return "Quorum reached"
+	case ProposalVotingEndsSoon:
+		return "Vote ends soon"
+	}
+
+	return ""
 }
 
 func (s *Service) MarkAsReadByID(ctx context.Context, subscriberID uuid.UUID, id ...uuid.UUID) error {
