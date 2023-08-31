@@ -61,6 +61,7 @@ func (c *Consumer) handler() inbox.FeedHandler {
 		converted := convertPayloadToInternal(payload)
 
 		if err := c.service.Process(context.TODO(), converted); err != nil {
+			log.Error().Err(err).Msgf("process item: %s", converted.ID)
 			return err
 		}
 
