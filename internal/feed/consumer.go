@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/goverland-labs/platform-events/events/inbox"
@@ -60,6 +61,7 @@ func (c *Consumer) handler() inbox.FeedHandler {
 		converted := convertPayloadToInternal(payload)
 
 		if err := c.service.Process(context.TODO(), converted); err != nil {
+			log.Error().Err(err).Msgf("process item: %s", converted.ID)
 			return err
 		}
 
@@ -90,12 +92,54 @@ func convertPayloadToInternal(payload inbox.FeedPayload) Item {
 func convertPayloadTimelineToInternal(timeline []inbox.TimelineItem) Timeline {
 	converted := make(Timeline, 0, len(timeline))
 
-	for _, t := range timeline {
+	var minCreatedAt, maxCreatedAt, createdAt, finishedAt, quorumReachedAt time.Time
+	var createdIdx, quorumReachedIdx int
+	for idx, t := range timeline {
+		action := convertPayloadActionToInternal(t.Action)
+
+		if action == ProposalCreated {
+			createdAt = t.CreatedAt
+			createdIdx = idx
+		}
+
+		if action == ProposalVotingQuorumReached {
+			quorumReachedAt = t.CreatedAt
+			quorumReachedIdx = idx
+		}
+
+		if action == ProposalVotingEnded {
+			finishedAt = t.CreatedAt
+		}
+
+		if minCreatedAt.IsZero() || minCreatedAt.After(t.CreatedAt) {
+			minCreatedAt = t.CreatedAt
+		}
+
+		if maxCreatedAt.Before(t.CreatedAt) {
+			maxCreatedAt = t.CreatedAt
+		}
+
 		converted = append(converted, TimelineInfo{
 			CreatedAt: t.CreatedAt,
-			Action:    convertPayloadActionToInternal(t.Action),
+			Action:    action,
 		})
 	}
+
+	if !createdAt.IsZero() && !createdAt.Equal(minCreatedAt) {
+		converted[createdIdx].CreatedAt = minCreatedAt
+	}
+
+	if !quorumReachedAt.IsZero() && !finishedAt.IsZero() && quorumReachedAt.After(finishedAt) {
+		converted[quorumReachedIdx].CreatedAt = finishedAt
+	}
+
+	sort.Slice(converted, func(i, j int) bool {
+		if converted[i].CreatedAt.Equal(converted[j].CreatedAt) {
+			return actionWeight(converted[i].Action) < actionWeight(converted[j].Action)
+		}
+
+		return converted[i].CreatedAt.Before(converted[j].CreatedAt)
+	})
 
 	return converted
 }
@@ -106,9 +150,23 @@ var payloadActionMap = map[inbox.TimelineAction]Action{
 	inbox.ProposalCreated:             ProposalCreated,
 	inbox.ProposalUpdated:             ProposalUpdated,
 	inbox.ProposalVotingStartsSoon:    ProposalVotingStartsSoon,
+	inbox.ProposalVotingEndsSoon:      ProposalVotingEndsSoon,
 	inbox.ProposalVotingStarted:       ProposalVotingStarted,
 	inbox.ProposalVotingQuorumReached: ProposalVotingQuorumReached,
 	inbox.ProposalVotingEnded:         ProposalVotingEnded,
+}
+
+func actionWeight(a Action) int {
+	switch a {
+	case DaoCreated, ProposalCreated:
+		return 1
+	case ProposalVotingQuorumReached:
+		return 3
+	case ProposalVotingEnded:
+		return 4
+	default:
+		return 2
+	}
 }
 
 func convertPayloadActionToInternal(action inbox.TimelineAction) Action {

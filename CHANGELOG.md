@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Sort feed timeline based on action weight
+- Correct created_at time based on the earliest event date
+- Correct quorum reached time based on finished at voting 
+
+### Added
+- Send push message to the queue
+
 ## [0.0.3] - 2023-07-26
 
 ### Changed

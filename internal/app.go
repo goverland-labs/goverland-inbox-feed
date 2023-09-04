@@ -8,6 +8,7 @@ import (
 
 	coresdk "github.com/goverland-labs/core-web-sdk"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
+	"github.com/goverland-labs/platform-events/pkg/natsclient"
 	"github.com/nats-io/nats.go"
 	"github.com/s-larionov/process-manager"
 	"google.golang.org/grpc"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/goverland-labs/inbox-feed/internal/config"
 	"github.com/goverland-labs/inbox-feed/internal/feed"
-	"github.com/goverland-labs/inbox-feed/pkg/communicate"
 	"github.com/goverland-labs/inbox-feed/pkg/grpcsrv"
 	"github.com/goverland-labs/inbox-feed/pkg/health"
 	"github.com/goverland-labs/inbox-feed/pkg/prometheus"
@@ -29,7 +29,7 @@ type Application struct {
 	cfg     config.App
 
 	natsConn      *nats.Conn
-	publisher     *communicate.Publisher
+	publisher     *natsclient.Publisher
 	subscriptions inboxapi.SubscriptionClient
 	feedRepo      *feed.Repo
 	feedService   *feed.Service
@@ -124,7 +124,7 @@ func (a *Application) initNats() error {
 		return err
 	}
 
-	publisher, err := communicate.NewPublisher(nc)
+	publisher, err := natsclient.NewPublisher(nc)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (a *Application) initCodeSDK() error {
 }
 
 func (a *Application) initServices() error {
-	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK)
+	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK, a.publisher)
 
 	return nil
 }

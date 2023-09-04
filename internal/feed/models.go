@@ -19,6 +19,7 @@ const (
 	ProposalCreated             Action = "proposal.created"
 	ProposalUpdated             Action = "proposal.updated"
 	ProposalVotingStartsSoon    Action = "proposal.voting.starts_soon"
+	ProposalVotingEndsSoon      Action = "proposal.voting.ends_soon"
 	ProposalVotingStarted       Action = "proposal.voting.started"
 	ProposalVotingQuorumReached Action = "proposal.voting.quorum_reached"
 	ProposalVotingEnded         Action = "proposal.voting.ended"
@@ -71,4 +72,19 @@ type Item struct {
 	Action       Action          `json:"action"`
 	Snapshot     json.RawMessage `gorm:"type:jsonb;serializer:json" json:"dao,omitempty"`
 	Timeline     Timeline        `gorm:"type:jsonb;serializer:json" json:"timeline"`
+}
+
+func (i Item) DAO() bool {
+	return i.ProposalID == "" && i.DiscussionID == ""
+}
+
+func (i Item) AllowSending() bool {
+	switch i.Action {
+	case ProposalCreated,
+		ProposalVotingQuorumReached,
+		ProposalVotingEndsSoon:
+		return true
+	}
+
+	return false
 }
