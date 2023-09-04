@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.4] - 2023-09-04
+
 ### Changed
 - Sort feed timeline based on action weight
 - Correct created_at time based on the earliest event date
