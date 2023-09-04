@@ -80,9 +80,9 @@ func (i Item) DAO() bool {
 
 func (i Item) AllowSending() bool {
 	switch i.Action {
-	case ProposalCreated:
-	case ProposalVotingQuorumReached:
-	case ProposalVotingEndsSoon:
+	case ProposalCreated,
+		ProposalVotingQuorumReached,
+		ProposalVotingEndsSoon:
 		return true
 	}
 
