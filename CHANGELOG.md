@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Prefill logic based on new requirements
+
 ## [0.0.4] - 2023-09-04
 
 ### Changed
