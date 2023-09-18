@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.6] - 2023-09-18
+
+### Changed
+- Update push title for the ProposalVotingEndsSoon event
+
 ## [0.0.5] - 2023-09-18
 
 ### Changed

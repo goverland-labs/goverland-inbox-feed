@@ -125,7 +125,7 @@ func convertAction(action Action) string {
 	case ProposalVotingQuorumReached:
 		return "Quorum reached"
 	case ProposalVotingEndsSoon:
-		return "Vote ends soon"
+		return "Vote finishes soon"
 	}
 
 	return ""
