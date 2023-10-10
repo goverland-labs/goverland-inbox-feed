@@ -203,7 +203,7 @@ func (r *Repo) CountByFilters(_ context.Context, filters []Filter) (int64, error
 	return count, err
 }
 
-func (r *Repo) FindByFilters(ctx context.Context, filters []Filter) ([]Item, error) {
+func (r *Repo) FindByFilters(_ context.Context, filters []Filter) ([]Item, error) {
 	query := r.conn.Model(&Item{})
 	for _, f := range filters {
 		f(query)

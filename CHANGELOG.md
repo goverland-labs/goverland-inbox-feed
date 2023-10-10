@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Added option for fetching archived items only
+
+### Fixed
+- Fixed prefilling feed if it isn't required
+
 ## [0.0.6] - 2023-09-18
 
 ### Changed
@@ -17,7 +23,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Prefill logic based on new requirements
 
-## [0.0.4] - 2023-09-04
+## [0.0.4] - 2023-08-25
 
 ### Changed
 - Sort feed timeline based on action weight

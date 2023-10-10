@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -15,6 +16,7 @@ import (
 	events "github.com/goverland-labs/platform-events/events/inbox"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
 
 	"github.com/goverland-labs/inbox-feed/pkg/helpers"
 )
@@ -164,6 +166,23 @@ func (s *Service) FindByFilters(ctx context.Context, subscriberID uuid.UUID, fil
 	}
 
 	return list, nil
+}
+
+func (s *Service) HasFeed(ctx context.Context, subscriberID uuid.UUID) (has bool, err error) {
+	filters := []Filter{
+		FilterBySubscriberID(subscriberID),
+		WithLimit(1, 0),
+	}
+
+	result, err := s.repo.FindByFilters(ctx, filters)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return len(result) > 0, nil
 }
 
 func (s *Service) CountByFilters(ctx context.Context, subscriberID uuid.UUID, filters []Filter) (count int64, err error) {
