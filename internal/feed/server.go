@@ -39,12 +39,24 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		SortedByCreatedAtDesc(),
 	}
 
-	if !req.GetIncludeArchived() {
-		filters = append(filters, FilterByArchivedStatus(helpers.Ptr(false)))
+	var unreadStateFilters []Filter
+
+	switch req.GetReadState() {
+	case inboxapi.GetUserFeedRequest_Exclude:
+		unreadStateFilters = append(unreadStateFilters, FilterByReadStatus(helpers.Ptr(false)))
+	case inboxapi.GetUserFeedRequest_ExcludeOther:
+		unreadStateFilters = append(unreadStateFilters, FilterByReadStatus(helpers.Ptr(true)))
+	default:
+		// GetUserFeedRequest_Include is default behaviour
 	}
 
-	if !req.GetIncludeRead() {
-		filters = append(filters, FilterByReadStatus(helpers.Ptr(false)))
+	switch req.GetArchivedState() {
+	case inboxapi.GetUserFeedRequest_Exclude:
+		filters = append(filters, FilterByArchivedStatus(helpers.Ptr(false)))
+	case inboxapi.GetUserFeedRequest_ExcludeOther:
+		filters = append(filters, FilterByArchivedStatus(helpers.Ptr(true)))
+	default:
+		// GetUserFeedRequest_Include is default behaviour
 	}
 
 	var pageLimit = defaultPageLimit
@@ -53,19 +65,19 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		pageLimit = int(req.GetLimit())
 	}
 
-	totalCount, err := s.service.CountByFilters(ctx, subscriberID, filters)
+	totalCount, err := s.service.CountByFilters(ctx, subscriberID, append(filters, unreadStateFilters...))
 	if err != nil {
 		log.Error().Err(err).Msg("unable to get total count of feed events")
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
 	if totalCount == 0 {
-		if err := s.service.PrefillFeed(ctx, subscriberID); err != nil {
-			log.Error().Err(err).Msg("unable to get total count of feed events")
+		if err := s.tryToPrefillIfNeeded(ctx, subscriberID); err != nil {
+			log.Error().Err(err).Msg("unable to prefill feed events")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
 
-		count, err := s.service.CountByFilters(ctx, subscriberID, filters)
+		count, err := s.service.CountByFilters(ctx, subscriberID, append(filters, unreadStateFilters...))
 		if err != nil {
 			log.Error().Err(err).Msg("unable to get total count of feed events")
 			return nil, status.Error(codes.Internal, "something went wrong")
@@ -86,7 +98,7 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
-	list, err := s.service.FindByFilters(ctx, subscriberID, filters)
+	list, err := s.service.FindByFilters(ctx, subscriberID, append(filters, unreadStateFilters...))
 	if err != nil {
 		log.Error().Err(err).Msg("unable to get user feed")
 		return nil, status.Error(codes.Internal, "something went wrong")
@@ -191,7 +203,7 @@ func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchive
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnrchivedRequest) (*emptypb.Empty, error) {
+func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarchivedRequest) (*emptypb.Empty, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
@@ -213,6 +225,18 @@ func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnrch
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (s *Server) tryToPrefillIfNeeded(ctx context.Context, subscriberID uuid.UUID) error {
+	has, err := s.service.HasFeed(ctx, subscriberID)
+	if err != nil {
+		return err
+	}
+	if has {
+		return nil
+	}
+
+	return s.service.PrefillFeed(ctx, subscriberID)
 }
 
 func convertToProto(list []Item) []*inboxapi.FeedItem {
