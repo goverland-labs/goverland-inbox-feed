@@ -204,6 +204,10 @@ func (s *Service) PrefillFeed(ctx context.Context, subscriberID uuid.UUID) error
 		return err
 	}
 
+	if len(subscriptions.GetItems()) == 0 {
+		return nil
+	}
+
 	var subscriberFeed []feed.Item
 	daos := make([]string, 0, len(subscriptions.GetItems()))
 	for _, sub := range subscriptions.GetItems() {
