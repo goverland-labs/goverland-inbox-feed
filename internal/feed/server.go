@@ -71,20 +71,6 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
-	if totalCount == 0 {
-		if err := s.tryToPrefillIfNeeded(ctx, subscriberID); err != nil {
-			log.Error().Err(err).Msg("unable to prefill feed events")
-			return nil, status.Error(codes.Internal, "something went wrong")
-		}
-
-		count, err := s.service.CountByFilters(ctx, subscriberID, append(filters, unreadStateFilters...))
-		if err != nil {
-			log.Error().Err(err).Msg("unable to get total count of feed events")
-			return nil, status.Error(codes.Internal, "something went wrong")
-		}
-		totalCount = count
-	}
-
 	var pageOffset int
 	if req.GetOffset() > 0 {
 		pageOffset = int(req.GetOffset())
@@ -203,6 +189,26 @@ func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchive
 	return &emptypb.Empty{}, nil
 }
 
+func (s *Server) UserSubscribe(ctx context.Context, req *inboxapi.UserSubscribeRequest) (*emptypb.Empty, error) {
+	subscriberID, err := uuid.Parse(req.GetSubscriberId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
+	}
+
+	daoID, err := uuid.Parse(req.GetDaoId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid dao id")
+	}
+
+	if err = s.service.Subscribe(ctx, subscriberID, daoID); err != nil {
+		log.Error().Err(err).Msgf("subscribe %s to %s", subscriberID.String(), daoID.String())
+
+		return nil, status.Error(codes.Internal, "internal err")
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
 func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarchivedRequest) (*emptypb.Empty, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
@@ -225,18 +231,6 @@ func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarc
 	}
 
 	return &emptypb.Empty{}, nil
-}
-
-func (s *Server) tryToPrefillIfNeeded(ctx context.Context, subscriberID uuid.UUID) error {
-	has, err := s.service.HasFeed(ctx, subscriberID)
-	if err != nil {
-		return err
-	}
-	if has {
-		return nil
-	}
-
-	return s.service.PrefillFeed(ctx, subscriberID)
 }
 
 func convertToProto(list []Item) []*inboxapi.FeedItem {

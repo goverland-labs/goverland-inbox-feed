@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	coresdk "github.com/goverland-labs/core-web-sdk"
-	"github.com/goverland-labs/core-web-sdk/dao"
 	"github.com/goverland-labs/core-web-sdk/feed"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
 	events "github.com/goverland-labs/platform-events/events/inbox"
@@ -196,50 +195,24 @@ func (s *Service) CountByFilters(ctx context.Context, subscriberID uuid.UUID, fi
 	return found, nil
 }
 
-func (s *Service) PrefillFeed(ctx context.Context, subscriberID uuid.UUID) error {
-	subscriptions, err := s.subscriptions.ListSubscriptions(ctx, &inboxapi.ListSubscriptionRequest{
-		SubscriberId: subscriberID.String(),
-	})
+func (s *Service) Subscribe(ctx context.Context, subscriberID, daoID uuid.UUID) error {
+	df, err := s.getDaoFeed(ctx, daoID)
 	if err != nil {
-		return err
+		return fmt.Errorf("getDaoFeed: %w", err)
 	}
-
-	if len(subscriptions.GetItems()) == 0 {
+	if df == nil {
 		return nil
 	}
 
-	var subscriberFeed []feed.Item
-	daos := make([]string, 0, len(subscriptions.GetItems()))
-	for _, sub := range subscriptions.GetItems() {
-		daos = append(daos, sub.GetDaoId())
-	}
-
-	daoFeed, err := s.sdk.GetFeedByFilters(ctx, coresdk.FeedByFiltersRequest{
-		DaoList:  daos,
-		IsActive: helpers.Ptr(true),
-		Types:    []string{"proposal"},
-		Limit:    maxPrefillElements,
-	})
-	if err != nil {
-		return fmt.Errorf("get feed by filters: %w", err)
-	}
-
-	subscriberFeed = append(subscriberFeed, daoFeed.Items...)
-	if len(subscriberFeed) < minPrefillElements {
-		subscriberFeed, err = s.prefillCustom(ctx, daos, subscriberFeed)
-		if err != nil {
-			return fmt.Errorf("prefill custom: %w", err)
-		}
-	}
-
+	subscriberFeed := append([]feed.Item{}, df.Items...)
 	sort.Slice(subscriberFeed, func(i, j int) bool {
 		return subscriberFeed[i].CreatedAt.After(subscriberFeed[j].CreatedAt)
 	})
 
 	for _, item := range subscriberFeed {
-		err := s.repo.CreateOrUpdate(convertCoreFeedItemToInternal(subscriberID, item))
-		if err != nil {
+		if err := s.repo.CreateOrUpdate(convertCoreFeedItemToInternal(subscriberID, item)); err != nil {
 			log.Error().Err(err).Str("feed_id", item.ID.String()).Msg("unable to save feed")
+
 			continue
 		}
 	}
@@ -247,70 +220,32 @@ func (s *Service) PrefillFeed(ctx context.Context, subscriberID uuid.UUID) error
 	return nil
 }
 
-func (s *Service) prefillCustom(ctx context.Context, daos []string, subscriberFeed []feed.Item) ([]feed.Item, error) {
+func (s *Service) getDaoFeed(ctx context.Context, daoID uuid.UUID) (*feed.Feed, error) {
 	daoFeed, err := s.sdk.GetFeedByFilters(ctx, coresdk.FeedByFiltersRequest{
-		DaoList:  daos,
-		IsActive: helpers.Ptr(false),
+		IsActive: helpers.Ptr(true),
+		DaoList:  []string{daoID.String()},
 		Types:    []string{"proposal"},
-		Limit:    minPrefillElements - len(subscriberFeed),
+		Limit:    maxPrefillElements,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("get feed by filters: %w", err)
 	}
 
-	if daoFeed.TotalCnt <= minPrefillElements-len(subscriberFeed) ||
-		len(daos) == 1 {
-		subscriberFeed = append(subscriberFeed, daoFeed.Items...)
-		return subscriberFeed, nil
+	if daoFeed != nil && len(daoFeed.Items) > 0 {
+		return daoFeed, nil
 	}
 
-	details, err := s.getSortedDaos(ctx, daos)
-	if err != nil {
-		return nil, fmt.Errorf("get sorted daos: %w", err)
-	}
-
-	daoIdx := 0
-	offsets := make([]int, len(details))
-	for len(subscriberFeed) < minPrefillElements {
-		daoFeed, err = s.sdk.GetFeedByFilters(ctx, coresdk.FeedByFiltersRequest{
-			DaoList:  []string{details[daoIdx].ID.String()},
-			IsActive: helpers.Ptr(false),
-			Types:    []string{"proposal"},
-			Limit:    1,
-			Offset:   offsets[daoIdx],
-		})
-		if err != nil {
-			return nil, fmt.Errorf("get feed by filters: %w", err)
-		}
-
-		subscriberFeed = append(subscriberFeed, daoFeed.Items...)
-
-		offsets[daoIdx]++
-		daoIdx++
-		if daoIdx >= len(details) {
-			daoIdx = 0
-		}
-	}
-
-	return subscriberFeed, nil
-}
-
-func (s *Service) getSortedDaos(ctx context.Context, daos []string) ([]dao.Dao, error) {
-	resp, err := s.sdk.GetDaoList(ctx, coresdk.GetDaoListRequest{
-		DaoIDS: daos,
+	daoFeed, err = s.sdk.GetFeedByFilters(ctx, coresdk.FeedByFiltersRequest{
+		IsActive: helpers.Ptr(false),
+		DaoList:  []string{daoID.String()},
+		Types:    []string{"proposal"},
+		Limit:    1,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("get dao details: %w", err)
+		return nil, fmt.Errorf("get feed by filters: %w", err)
 	}
 
-	details := make([]dao.Dao, len(resp.Items))
-	copy(details, resp.Items)
-
-	sort.Slice(details, func(i, j int) bool {
-		return details[i].FollowersCount > details[j].FollowersCount
-	})
-
-	return details, nil
+	return daoFeed, nil
 }
 
 func convertCoreFeedItemToInternal(subscriberID uuid.UUID, item feed.Item) *Item {

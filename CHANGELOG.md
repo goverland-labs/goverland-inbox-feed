@@ -8,6 +8,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- Add reactive subscription on DAO
+
+## [0.0.8] - 2023-11-07
+
+### Changed
 - Do not prefill feed on empty subscriptions
 
 ## [0.0.7] - 2023-10-10
