@@ -189,7 +189,7 @@ func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchive
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) Subscribe(ctx context.Context, req *inboxapi.SubscribeRequest) (*emptypb.Empty, error) {
+func (s *Server) UserSubscribe(ctx context.Context, req *inboxapi.UserSubscribeRequest) (*emptypb.Empty, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
