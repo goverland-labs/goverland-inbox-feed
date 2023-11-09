@@ -130,7 +130,7 @@ func (r *Repo) MarkAsReadByTime(_ context.Context, subscriberID uuid.UUID, t tim
 	err := r.conn.
 		Model(&Item{}).
 		Where("subscriber_id = @subscriber_id", sql.Named("subscriber_id", subscriberID)).
-		Where("created_at <= @before", sql.Named("before", t)).
+		Where("updated_at <= @before", sql.Named("before", t)).
 		Update("read_at", now).
 		Error
 

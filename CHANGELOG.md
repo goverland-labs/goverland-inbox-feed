@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Mark read by updated_at field
+
 ## [0.0.9] - 2023-11-07
 
 ### Changed
