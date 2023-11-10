@@ -141,6 +141,9 @@ func (s *Service) MarkAsUnreadByID(ctx context.Context, subscriberID uuid.UUID, 
 }
 
 func (s *Service) MarkAsReadByTime(ctx context.Context, subscriberID uuid.UUID, t time.Time) error {
+	// dirty fix to mark as read without counting nanoseconds
+	t = t.Add(time.Second)
+
 	return s.repo.MarkAsReadByTime(ctx, subscriberID, t)
 }
 
