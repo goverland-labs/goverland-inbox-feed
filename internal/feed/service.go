@@ -262,7 +262,7 @@ func convertCoreFeedItemToInternal(subscriberID uuid.UUID, item feed.Item) *Item
 		ID:           item.ID,
 		SubscriberID: subscriberID,
 		CreatedAt:    item.CreatedAt,
-		UpdatedAt:    item.UpdatedAt,
+		UpdatedAt:    time.Now(),
 		DaoID:        item.DaoID,
 		ProposalID:   item.ProposalID,
 		DiscussionID: item.DiscussionID,

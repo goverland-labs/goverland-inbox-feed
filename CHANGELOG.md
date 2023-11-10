@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.11] - 2023-11-10
+
+### Changed
+- Updating updated_at column
+
 ## [0.0.10] - 2023-11-10
 
 ### Changed

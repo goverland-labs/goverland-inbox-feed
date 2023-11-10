@@ -29,6 +29,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		_ = item.Action
 		_ = item.Timeline
 		_ = item.CreatedAt
+		_ = item.UpdatedAt
 	)
 
 	// nolint:godox
@@ -62,6 +63,7 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 			{Column: clause.Column{Name: "timeline"}, Value: timeline},
 			{Column: clause.Column{Name: "action"}, Value: item.Action},
 			{Column: clause.Column{Name: "created_at"}, Value: item.CreatedAt},
+			{Column: clause.Column{Name: "updated_at"}, Value: time.Now()},
 		},
 	}
 
