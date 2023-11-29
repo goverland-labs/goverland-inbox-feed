@@ -36,7 +36,7 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 	}
 
 	filters := []Filter{
-		SortedByUpdatedAtDesc(),
+		SortedByActuality(),
 	}
 
 	var unreadStateFilters []Filter

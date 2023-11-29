@@ -85,3 +85,23 @@ func SortedByUpdatedAtDesc() Filter {
 		return query.Order("updated_at desc")
 	}
 }
+
+func SortedByActuality() Filter {
+	var (
+		dummy Item
+		_     = dummy.Snapshot // created and state
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		return query.Order(`
+				array_position(array [
+					'active',
+					'pending',
+					'succeeded',
+					'failed',
+					'defeated',
+					'canceled'
+				], snapshot->>'state'), 
+				snapshot->>'created' desc`)
+	}
+}
