@@ -9,6 +9,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Update feed sorting
+- Mark everything as read unless params specified
 
 ## [0.0.11] - 2023-11-10
 
