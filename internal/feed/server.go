@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
@@ -36,7 +37,7 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 	}
 
 	filters := []Filter{
-		SortedByUpdatedAtDesc(),
+		SortedByActuality(),
 	}
 
 	var unreadStateFilters []Filter
@@ -113,7 +114,7 @@ func (s *Server) MarkAsRead(ctx context.Context, req *inboxapi.MarkAsReadRequest
 		}
 
 		if err := s.service.MarkAsReadByID(ctx, subscriberID, ids...); err != nil {
-			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as paid")
+			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as read")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
 
@@ -122,11 +123,17 @@ func (s *Server) MarkAsRead(ctx context.Context, req *inboxapi.MarkAsReadRequest
 
 	if req.GetBefore() != nil {
 		if err := s.service.MarkAsReadByTime(ctx, subscriberID, req.GetBefore().AsTime()); err != nil {
-			log.Warn().Err(err).Any("before", req.GetBefore().AsTime()).Msg("unable to mark as paid")
+			log.Warn().Err(err).Any("before", req.GetBefore().AsTime()).Msg("unable to mark as read")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
 
 		return &emptypb.Empty{}, nil
+	}
+
+	now := time.Now()
+	if err := s.service.MarkAsReadByTime(ctx, subscriberID, now); err != nil {
+		log.Warn().Err(err).Any("before", now).Msg("unable to mark as read")
+		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
 	return &emptypb.Empty{}, nil

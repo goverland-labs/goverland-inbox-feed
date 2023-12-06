@@ -67,14 +67,6 @@ func (r *Repo) CreateOrUpdate(item *Item) error {
 		},
 	}
 
-	isTimelineUpdated := found.Timeline.Equal(item.Timeline)
-	if isTimelineUpdated {
-		cl.DoUpdates = append(cl.DoUpdates, clause.Assignment{
-			Column: clause.Column{Name: "read_at"},
-			Value:  gorm.Expr("NULL"),
-		})
-	}
-
 	query = tx.Debug().Clauses(cl).Create(item)
 
 	if query.Error != nil {
