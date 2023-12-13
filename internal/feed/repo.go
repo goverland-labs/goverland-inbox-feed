@@ -208,3 +208,18 @@ func (r *Repo) FindByFilters(_ context.Context, filters []Filter) ([]Item, error
 
 	return list, err
 }
+
+func (r *Repo) AutoArchive(_ context.Context) error {
+	var (
+		dummy Item
+		_     = dummy.ArchivedAt
+		_     = dummy.Snapshot
+	)
+
+	return r.conn.Exec(`
+		UPDATE items
+		SET archived_at = now()
+		WHERE archived_at IS NULL
+		  AND to_timestamp((snapshot -> 'end')::double precision) < now() - INTERVAL '7 day'
+`).Error
+}

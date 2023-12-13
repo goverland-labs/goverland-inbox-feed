@@ -251,6 +251,15 @@ func (s *Service) getDaoFeed(ctx context.Context, daoID uuid.UUID) (*feed.Feed, 
 	return daoFeed, nil
 }
 
+func (s *Service) markExpiredAsAutoArchived(ctx context.Context) error {
+	err := s.repo.AutoArchive(ctx)
+	if err != nil {
+		return fmt.Errorf("s.repo.AutoArchive: %w", err)
+	}
+
+	return nil
+}
+
 func convertCoreFeedItemToInternal(subscriberID uuid.UUID, item feed.Item) *Item {
 	var timeline Timeline
 	err := json.Unmarshal(item.Timeline, &timeline)
