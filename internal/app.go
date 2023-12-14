@@ -71,6 +71,7 @@ func (a *Application) bootstrap() error {
 		// Init Workers: Application
 		a.initGRPCServer,
 		a.initFeedConsumer,
+		a.initFeedWorkers,
 
 		// Init Workers: System
 		a.initPrometheusWorker,
@@ -161,6 +162,13 @@ func (a *Application) initServices() error {
 func (a *Application) initFeedConsumer() error {
 	consumer := feed.NewConsumer(a.natsConn, a.feedService)
 	a.manager.AddWorker(process.NewCallbackWorker("feed consumer", consumer.Start))
+
+	return nil
+}
+
+func (a *Application) initFeedWorkers() error {
+	aw := feed.NewAutoArchiveWorker(a.feedService)
+	a.manager.AddWorker(process.NewCallbackWorker("auto-archive-worker", aw.Start))
 
 	return nil
 }
