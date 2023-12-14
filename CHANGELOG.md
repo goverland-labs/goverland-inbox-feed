@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.13] - 2023-12-14
+
 ### Added
 - Basic auto archive logic
 
