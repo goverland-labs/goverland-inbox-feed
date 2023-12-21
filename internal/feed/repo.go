@@ -220,6 +220,7 @@ func (r *Repo) AutoArchive(_ context.Context) error {
 		UPDATE items
 		SET archived_at = now()
 		WHERE archived_at IS NULL
+		  AND created_at < now() - INTERVAL '7 day'
 		  AND to_timestamp((snapshot -> 'end')::double precision) < now() - INTERVAL '7 day'
 `).Error
 }
