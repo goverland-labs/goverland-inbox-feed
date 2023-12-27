@@ -70,6 +70,26 @@ func (s *Service) Process(ctx context.Context, item Item) error {
 			return fmt.Errorf("unable to parse subscriber id '%s': %w", sub.GetUserId(), err)
 		}
 
+		var prInfo ShortProposalInfo
+		err = json.Unmarshal(item.Snapshot, &prInfo)
+		if err != nil {
+			return fmt.Errorf("unmarshal snapshot: %w", err)
+		}
+
+		list, err := s.repo.FindByFilters(context.Background(), []Filter{
+			FilterBySubscriberID(subscriberID),
+			FilterByProposalID(item.ProposalID),
+		})
+
+		if err != nil {
+			return fmt.Errorf("find by filters: %w", err)
+		}
+
+		// do not add item if it already closed
+		if len(list) == 0 && !prInfo.Active() {
+			return nil
+		}
+
 		personalized := item
 		personalized.SubscriberID = subscriberID
 

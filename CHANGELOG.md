@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Decrease 1 week param to 1 day param for auto-archiving 
+- Do not add to inbox inactive proposals
+
 ## [0.0.14] - 2023-12-21
 
 ### Changed

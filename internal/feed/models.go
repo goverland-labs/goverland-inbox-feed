@@ -3,6 +3,7 @@ package feed
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"sort"
 	"time"
 
@@ -87,4 +88,21 @@ func (i Item) AllowSending() bool {
 	}
 
 	return false
+}
+
+const (
+	ProposalStateActive  = "active"
+	ProposalStatePending = "pending"
+)
+
+var (
+	activeProposalStates = []string{ProposalStateActive, ProposalStatePending}
+)
+
+type ShortProposalInfo struct {
+	State string `json:"state"`
+}
+
+func (i *ShortProposalInfo) Active() bool {
+	return slices.Contains(activeProposalStates, i.State)
 }

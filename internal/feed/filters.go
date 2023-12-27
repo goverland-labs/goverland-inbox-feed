@@ -20,6 +20,17 @@ func FilterBySubscriberID(id uuid.UUID) Filter {
 	}
 }
 
+func FilterByProposalID(id string) Filter {
+	var (
+		dummy Item
+		_     = dummy.ProposalID
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		return query.Where("proposal_id = @proposal_id", sql.Named("proposal_id", id))
+	}
+}
+
 func FilterByArchivedStatus(status *bool) Filter {
 	var (
 		dummy Item
