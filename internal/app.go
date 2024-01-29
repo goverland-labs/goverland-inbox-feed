@@ -154,7 +154,7 @@ func (a *Application) initCodeSDK() error {
 }
 
 func (a *Application) initServices() error {
-	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK, a.publisher)
+	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK)
 
 	return nil
 }
