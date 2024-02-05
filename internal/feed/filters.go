@@ -97,6 +97,28 @@ func SortedByUpdatedAtDesc() Filter {
 	}
 }
 
+func SkipSpammed() Filter {
+	var (
+		dummy Item
+		_     = dummy.Snapshot // spam flag
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		return query.Where(`snapshot->>'spam' != 'true'`)
+	}
+}
+
+func SkipClosed() Filter {
+	var (
+		dummy Item
+		_     = dummy.Snapshot // state
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		return query.Where(`snapshot->>'state' != 'canceled'`)
+	}
+}
+
 func SortedByActuality() Filter {
 	var (
 		dummy Item

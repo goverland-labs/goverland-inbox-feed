@@ -37,6 +37,8 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 	}
 
 	filters := []Filter{
+		SkipSpammed(),
+		SkipClosed(),
 		SortedByActuality(),
 	}
 
