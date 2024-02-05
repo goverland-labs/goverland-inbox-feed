@@ -79,17 +79,6 @@ func (i Item) DAO() bool {
 	return i.ProposalID == "" && i.DiscussionID == ""
 }
 
-func (i Item) AllowSending() bool {
-	switch i.Action {
-	case ProposalCreated,
-		ProposalVotingQuorumReached,
-		ProposalVotingEndsSoon:
-		return true
-	}
-
-	return false
-}
-
 const (
 	ProposalStateActive  = "active"
 	ProposalStatePending = "pending"
