@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.16] - 2024-02-05
+
 ### Removed
 - Moved preparations for pushes to inbox-push service
 
