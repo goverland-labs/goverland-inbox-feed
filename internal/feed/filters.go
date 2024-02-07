@@ -108,7 +108,7 @@ func SkipSpammed() Filter {
 	}
 }
 
-func SkipClosed() Filter {
+func SkipCanceled() Filter {
 	var (
 		dummy Item
 		_     = dummy.Snapshot // state
