@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Filtering inbox by spam proposals
+- Filtering inbox by closed proposals
+
 ## [0.0.16] - 2024-02-05
 
 ### Removed
