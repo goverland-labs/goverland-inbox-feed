@@ -147,18 +147,32 @@ func (s *Server) MarkAsUnread(ctx context.Context, req *inboxapi.MarkAsUnreadReq
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
 	}
 
-	if len(req.GetIds()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty id list")
+	if len(req.GetIds()) != 0 {
+		ids, err := helpers.ConvertStringsToUUIDs(req.GetIds())
+		if err != nil {
+			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable convert strings to UUIDs")
+			return nil, status.Error(codes.InvalidArgument, "invalid id format")
+		}
+
+		if err := s.service.MarkAsUnreadByID(ctx, subscriberID, ids...); err != nil {
+			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as unread")
+			return nil, status.Error(codes.Internal, "something went wrong")
+		}
+
+		return &emptypb.Empty{}, nil
 	}
 
-	ids, err := helpers.ConvertStringsToUUIDs(req.GetIds())
-	if err != nil {
-		log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable convert strings to UUIDs")
-		return nil, status.Error(codes.InvalidArgument, "invalid id format")
+	if req.GetAfter() != nil {
+		if err := s.service.MarkAsUnreadByTime(ctx, subscriberID, req.GetAfter().AsTime()); err != nil {
+			log.Warn().Err(err).Any("before", req.GetAfter().AsTime()).Msg("unable to mark as unread")
+			return nil, status.Error(codes.Internal, "something went wrong")
+		}
+
+		return &emptypb.Empty{}, nil
 	}
 
-	if err := s.service.MarkAsUnreadByID(ctx, subscriberID, ids...); err != nil {
-		log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as unread")
+	if err := s.service.MarkAsReadByTime(ctx, subscriberID, time.Time{}); err != nil {
+		log.Warn().Err(err).Any("before", time.Time{}).Msg("unable to mark as unread")
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 

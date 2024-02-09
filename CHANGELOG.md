@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Changed unread endpoints
+
 ## [0.0.17] - 2024-02-08
 
 ### Added

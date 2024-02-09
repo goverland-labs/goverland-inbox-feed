@@ -131,6 +131,25 @@ func (r *Repo) MarkAsReadByTime(_ context.Context, subscriberID uuid.UUID, t tim
 	return err
 }
 
+func (r *Repo) MarkAsUnreadByTime(_ context.Context, subscriberID uuid.UUID, t time.Time) error {
+	var (
+		dummy Item
+		_     = dummy.SubscriberID
+		_     = dummy.ReadAt
+		_     = dummy.CreatedAt
+	)
+
+	now := time.Now()
+	err := r.conn.
+		Model(&Item{}).
+		Where("subscriber_id = @subscriber_id", sql.Named("subscriber_id", subscriberID)).
+		Where("updated_at >= @after", sql.Named("after", t)).
+		Update("read_at", now).
+		Error
+
+	return err
+}
+
 func (r *Repo) MarkAsArchivedByID(_ context.Context, subscriberID uuid.UUID, id ...uuid.UUID) error {
 	var (
 		dummy Item
