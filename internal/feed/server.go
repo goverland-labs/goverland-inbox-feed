@@ -102,7 +102,27 @@ func (s *Server) GetUserFeed(ctx context.Context, req *inboxapi.GetUserFeedReque
 	return resp, nil
 }
 
-func (s *Server) MarkAsRead(ctx context.Context, req *inboxapi.MarkAsReadRequest) (*emptypb.Empty, error) {
+func (s *Server) calcCounters(ctx context.Context, subscriberID uuid.UUID) (totalCount int64, unreadCount int64, err error) {
+	filters := []Filter{
+		SkipSpammed(),
+		SkipCanceled(),
+		SortedByActuality(),
+	}
+
+	totalCount, err = s.service.CountByFilters(ctx, subscriberID, filters)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	unreadCount, err = s.service.CountByFilters(ctx, subscriberID, append(filters, FilterByReadStatus(helpers.Ptr(false))))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return totalCount, unreadCount, nil
+}
+
+func (s *Server) MarkAsRead(ctx context.Context, req *inboxapi.MarkAsReadRequest) (*inboxapi.UnreadStats, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
@@ -119,29 +139,30 @@ func (s *Server) MarkAsRead(ctx context.Context, req *inboxapi.MarkAsReadRequest
 			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as read")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
-
-		return &emptypb.Empty{}, nil
-	}
-
-	if req.GetBefore() != nil {
+	} else if req.GetBefore() != nil {
 		if err := s.service.MarkAsReadByTime(ctx, subscriberID, req.GetBefore().AsTime()); err != nil {
 			log.Warn().Err(err).Any("before", req.GetBefore().AsTime()).Msg("unable to mark as read")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
-
-		return &emptypb.Empty{}, nil
+	} else {
+		if err := s.service.MarkAsReadByTime(ctx, subscriberID, time.Now()); err != nil {
+			log.Warn().Err(err).Any("before", time.Now()).Msg("unable to mark as read")
+			return nil, status.Error(codes.Internal, "something went wrong")
+		}
 	}
 
-	now := time.Now()
-	if err := s.service.MarkAsReadByTime(ctx, subscriberID, now); err != nil {
-		log.Warn().Err(err).Any("before", now).Msg("unable to mark as read")
-		return nil, status.Error(codes.Internal, "something went wrong")
+	total, unread, err := s.calcCounters(ctx, subscriberID)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to calc counters")
 	}
 
-	return &emptypb.Empty{}, nil
+	return &inboxapi.UnreadStats{
+		TotalCount:  uint32(total),
+		UnreadCount: uint32(unread),
+	}, nil
 }
 
-func (s *Server) MarkAsUnread(ctx context.Context, req *inboxapi.MarkAsUnreadRequest) (*emptypb.Empty, error) {
+func (s *Server) MarkAsUnread(ctx context.Context, req *inboxapi.MarkAsUnreadRequest) (*inboxapi.UnreadStats, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
@@ -158,28 +179,28 @@ func (s *Server) MarkAsUnread(ctx context.Context, req *inboxapi.MarkAsUnreadReq
 			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as unread")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
-
-		return &emptypb.Empty{}, nil
-	}
-
-	if req.GetAfter() != nil {
+	} else if req.GetAfter() != nil {
 		if err := s.service.MarkAsUnreadByTime(ctx, subscriberID, req.GetAfter().AsTime()); err != nil {
 			log.Warn().Err(err).Any("before", req.GetAfter().AsTime()).Msg("unable to mark as unread")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
-
-		return &emptypb.Empty{}, nil
-	}
-
-	if err := s.service.MarkAsReadByTime(ctx, subscriberID, time.Time{}); err != nil {
+	} else if err := s.service.MarkAsReadByTime(ctx, subscriberID, time.Time{}); err != nil {
 		log.Warn().Err(err).Any("before", time.Time{}).Msg("unable to mark as unread")
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
-	return &emptypb.Empty{}, nil
+	total, unread, err := s.calcCounters(ctx, subscriberID)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to calc counters")
+	}
+
+	return &inboxapi.UnreadStats{
+		TotalCount:  uint32(total),
+		UnreadCount: uint32(unread),
+	}, nil
 }
 
-func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchivedRequest) (*emptypb.Empty, error) {
+func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchivedRequest) (*inboxapi.UnreadStats, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
@@ -196,20 +217,23 @@ func (s *Server) MarkAsArchived(ctx context.Context, req *inboxapi.MarkAsArchive
 			log.Warn().Err(err).Strs("ids", req.GetIds()).Msg("unable to mark as arhived")
 			return nil, status.Error(codes.Internal, "something went wrong")
 		}
-
-		return &emptypb.Empty{}, nil
-	}
-
-	if req.GetBefore() != nil {
+	} else if req.GetBefore() != nil {
 		if err := s.service.MarkAsArchivedByTime(ctx, subscriberID, req.GetBefore().AsTime()); err != nil {
 			log.Warn().Err(err).Any("before", req.GetBefore().AsTime()).Msg("unable to mark as archived")
 			return nil, status.Error(codes.Internal, "something went wrong")
 
 		}
-		return &emptypb.Empty{}, nil
 	}
 
-	return &emptypb.Empty{}, nil
+	total, unread, err := s.calcCounters(ctx, subscriberID)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to calc counters")
+	}
+
+	return &inboxapi.UnreadStats{
+		TotalCount:  uint32(total),
+		UnreadCount: uint32(unread),
+	}, nil
 }
 
 func (s *Server) UserSubscribe(ctx context.Context, req *inboxapi.UserSubscribeRequest) (*emptypb.Empty, error) {
@@ -232,7 +256,7 @@ func (s *Server) UserSubscribe(ctx context.Context, req *inboxapi.UserSubscribeR
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarchivedRequest) (*emptypb.Empty, error) {
+func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarchivedRequest) (*inboxapi.UnreadStats, error) {
 	subscriberID, err := uuid.Parse(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid subscriber id")
@@ -253,7 +277,15 @@ func (s *Server) MarkAsUnarchived(ctx context.Context, req *inboxapi.MarkAsUnarc
 		return nil, status.Error(codes.Internal, "something went wrong")
 	}
 
-	return &emptypb.Empty{}, nil
+	total, unread, err := s.calcCounters(ctx, subscriberID)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to calc counters")
+	}
+
+	return &inboxapi.UnreadStats{
+		TotalCount:  uint32(total),
+		UnreadCount: uint32(unread),
+	}, nil
 }
 
 func convertToProto(list []Item) []*inboxapi.FeedItem {
