@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/goverland-labs/platform-events/events/inbox"
-	client "github.com/goverland-labs/platform-events/pkg/natsclient"
+	"github.com/goverland-labs/goverland-platform-events/events/inbox"
+	client "github.com/goverland-labs/goverland-platform-events/pkg/natsclient"
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog/log"
 
