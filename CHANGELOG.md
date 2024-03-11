@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.21] - 2024-03-11
+
 ### Fixed
 - Fixed calc counters for mark as read/unread endpoints
 
