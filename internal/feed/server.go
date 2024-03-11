@@ -107,6 +107,7 @@ func (s *Server) calcCounters(ctx context.Context, subscriberID uuid.UUID) (tota
 		SkipSpammed(),
 		SkipCanceled(),
 		SortedByActuality(),
+		FilterByArchivedStatus(helpers.Ptr(false)),
 	}
 
 	totalCount, err = s.service.CountByFilters(ctx, subscriberID, filters)
