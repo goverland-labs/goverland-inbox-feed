@@ -205,20 +205,6 @@ func (s *Service) getDaoFeed(ctx context.Context, daoID uuid.UUID) (*feed.Feed, 
 		return nil, fmt.Errorf("get feed by filters: %w", err)
 	}
 
-	if daoFeed != nil && len(daoFeed.Items) > 0 {
-		return daoFeed, nil
-	}
-
-	daoFeed, err = s.sdk.GetFeedByFilters(ctx, coresdk.FeedByFiltersRequest{
-		IsActive: helpers.Ptr(false),
-		DaoList:  []string{daoID.String()},
-		Types:    []string{"proposal"},
-		Limit:    1,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("get feed by filters: %w", err)
-	}
-
 	return daoFeed, nil
 }
 
