@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.22] - 2024-04-02
+
 ### Changed
 - Don’t fill Feed with completed items
 
