@@ -31,6 +31,7 @@ type Application struct {
 	natsConn      *nats.Conn
 	publisher     *natsclient.Publisher
 	subscriptions inboxapi.SubscriptionClient
+	settings      inboxapi.SettingsClient
 	feedRepo      *feed.Repo
 	feedService   *feed.Service
 	coreSDK       *coresdk.Client
@@ -143,6 +144,7 @@ func (a *Application) initInboxAPI() error {
 	}
 
 	a.subscriptions = inboxapi.NewSubscriptionClient(conn)
+	a.settings = inboxapi.NewSettingsClient(conn)
 
 	return nil
 }
@@ -154,7 +156,7 @@ func (a *Application) initCodeSDK() error {
 }
 
 func (a *Application) initServices() error {
-	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.coreSDK)
+	a.feedService = feed.NewService(a.feedRepo, a.subscriptions, a.settings, a.coreSDK)
 
 	return nil
 }

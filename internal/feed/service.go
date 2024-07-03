@@ -13,6 +13,7 @@ import (
 	"github.com/goverland-labs/core-web-sdk/feed"
 	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
 	"github.com/rs/zerolog/log"
+	"go.openly.dev/pointy"
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
@@ -28,16 +29,22 @@ type SubscriptionsFinder interface {
 	ListSubscriptions(ctx context.Context, in *inboxapi.ListSubscriptionRequest, opts ...grpc.CallOption) (*inboxapi.ListSubscriptionResponse, error)
 }
 
+type SettingsProvider interface {
+	GetFeedSettings(ctx context.Context, in *inboxapi.GetFeedSettingsRequest, opts ...grpc.CallOption) (*inboxapi.GetFeedSettingsResponse, error)
+}
+
 type Service struct {
 	repo          *Repo
 	subscriptions SubscriptionsFinder
+	settings      SettingsProvider
 	sdk           *coresdk.Client
 }
 
-func NewService(repo *Repo, subscriptions SubscriptionsFinder, sdk *coresdk.Client) *Service {
+func NewService(repo *Repo, subscriptions SubscriptionsFinder, sp SettingsProvider, sdk *coresdk.Client) *Service {
 	return &Service{
 		repo:          repo,
 		subscriptions: subscriptions,
+		settings:      sp,
 		sdk:           sdk,
 	}
 }
@@ -237,4 +244,46 @@ func convertCoreFeedItemToInternal(subscriberID uuid.UUID, item feed.Item) *Item
 		Snapshot:     item.Snapshot,
 		Timeline:     timeline,
 	}
+}
+
+func (s *Service) TryAutoarchive(ctx context.Context, userID uuid.UUID, proposalID string) error {
+	set, err := s.settings.GetFeedSettings(ctx, &inboxapi.GetFeedSettingsRequest{
+		UserId: userID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("get feed settings: %w", err)
+	}
+
+	// skip if it's disabled in user config
+	if !set.GetFeedSettings().GetArchiveProposalAfterVote() {
+		return nil
+	}
+
+	items, err := s.repo.FindByFilters(ctx, []Filter{
+		FilterBySubscriberID(userID),
+		FilterByArchivedStatus(pointy.Bool(false)),
+		FilterByProposalID(proposalID),
+	})
+	if err != nil {
+		return fmt.Errorf("find by filters: %w", err)
+	}
+
+	if len(items) == 0 {
+		log.Warn().Msgf("can't find [%s] feed item by proposal id %s", userID, proposalID)
+		return nil
+	}
+
+	if len(items) > 1 {
+		log.Warn().Msgf("find [%s] few feed item by proposal id %s", userID, proposalID)
+	}
+
+	if err = s.repo.MarkAsReadByID(ctx, userID, items[0].ID); err != nil {
+		return fmt.Errorf("mark as read: %w", err)
+	}
+
+	if err = s.repo.MarkAsArchivedByID(ctx, userID, items[0].ID); err != nil {
+		return fmt.Errorf("mark as archived: %w", err)
+	}
+
+	return nil
 }
