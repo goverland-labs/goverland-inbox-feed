@@ -75,6 +75,13 @@ type Item struct {
 	Timeline     Timeline        `gorm:"type:jsonb;serializer:json" json:"timeline"`
 }
 
+type Settings struct {
+	SubscriberID         uuid.UUID `gorm:"index"`
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	AutoarchiveAfterDays int
+}
+
 func (i Item) DAO() bool {
 	return i.ProposalID == "" && i.DiscussionID == ""
 }

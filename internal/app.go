@@ -105,9 +105,12 @@ func (a *Application) initDatabase() error {
 		conn = conn.Debug()
 	}
 
-	// TODO: Use real migrations intead of auto migrations from gorm
-	if err := conn.AutoMigrate(&feed.Item{}); err != nil {
-		return err
+	// TODO: Use real migrations instead of auto migrations from gorm
+	if err := conn.AutoMigrate(
+		&feed.Item{},
+		&feed.Settings{},
+	); err != nil {
+		return fmt.Errorf("automigrate: %w", err)
 	}
 
 	a.feedRepo = feed.NewRepo(conn)

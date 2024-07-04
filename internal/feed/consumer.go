@@ -54,7 +54,11 @@ func (c *Consumer) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("consume for %s/%s: %w", group, inbox.SubjectFeedUpdated, err)
 	}
-	c.consumers = append(c.consumers, cfu, cvc)
+	fcc, err := client.NewConsumer(ctx, c.conn, group, inbox.SubjectFeedSettingsUpdated, c.handlerSettingsUpdated(), opts...)
+	if err != nil {
+		return fmt.Errorf("consume for %s/%s: %w", group, inbox.SubjectFeedSettingsUpdated, err)
+	}
+	c.consumers = append(c.consumers, cfu, cvc, fcc)
 
 	log.Info().Msg("feed consumer is started")
 
@@ -91,6 +95,17 @@ func (c *Consumer) handlerVoteCreated() inbox.VoteHandler {
 	return func(payload inbox.VotePayload) error {
 		if err := c.service.TryAutoarchive(context.TODO(), payload.UserID, payload.ProposalID); err != nil {
 			log.Error().Err(err).Msgf("process voting: %s", payload.UserID)
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (c *Consumer) handlerSettingsUpdated() inbox.FeedSettingsHandler {
+	return func(payload inbox.FeedSettingsPayload) error {
+		if err := c.service.SaveSettings(context.TODO(), payload.SubscriberID, payload.AutoarchiveAfterDays); err != nil {
+			log.Error().Err(err).Msgf("process settings: %s", payload.SubscriberID)
 			return err
 		}
 

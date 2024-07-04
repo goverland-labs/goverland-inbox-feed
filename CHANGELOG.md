@@ -9,6 +9,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Autoarchive feed item after voting on proposal
+- Consume settings updates
+- Autoarchive after N days by user settings
 
 ## [0.0.22] - 2024-04-02
 

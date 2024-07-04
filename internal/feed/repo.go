@@ -236,10 +236,44 @@ func (r *Repo) AutoArchive(_ context.Context) error {
 	)
 
 	return r.conn.Exec(`
-		UPDATE items
-		SET archived_at = now()
-		WHERE archived_at IS NULL
-		  AND created_at < now() - INTERVAL '1 day'
-		  AND to_timestamp((snapshot -> 'end')::double precision) < now() - INTERVAL '7 day'
+		update items fi
+		set archived_at = now()
+		from (select fi.id,
+					 fi.subscriber_id,
+					 coalesce(fs.autoarchive_after_days, 7)                                  as autoarchive_after_days,
+					 now()::date - to_timestamp((snapshot -> 'end')::double precision)::date as expired_days
+			  from items fi
+					   left join settings fs on fs.subscriber_id = fi.subscriber_id
+			  where fi.archived_at is null
+				AND fi.deleted_at is null
+				AND fi.created_at < now() - INTERVAL '1 day'
+				AND now()::date - to_timestamp((snapshot -> 'end')::double precision)::date > 0) ds
+		where ds.expired_days > ds.autoarchive_after_days
+		  and fi.id = ds.id
+		  and fi.subscriber_id = ds.subscriber_id
 `).Error
+}
+
+func (r *Repo) GetFeedSettings(_ context.Context, subscriber uuid.UUID) (*Settings, error) {
+	fs := Settings{SubscriberID: subscriber}
+	request := r.conn.Take(&fs)
+	if err := request.Error; err != nil {
+		return nil, fmt.Errorf("get settings by id #%s: %w", subscriber, err)
+	}
+
+	return &fs, nil
+}
+
+func (r *Repo) StoreSettings(_ context.Context, sd *Settings) error {
+	err := r.conn.
+		Model(&Settings{}).
+		Where(&Settings{SubscriberID: sd.SubscriberID}).
+		Updates(&Settings{
+			UpdatedAt:            time.Now(),
+			AutoarchiveAfterDays: sd.AutoarchiveAfterDays,
+		}).
+		FirstOrCreate(&sd).
+		Error
+
+	return err
 }

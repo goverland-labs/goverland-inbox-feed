@@ -287,3 +287,22 @@ func (s *Service) TryAutoarchive(ctx context.Context, userID uuid.UUID, proposal
 
 	return nil
 }
+
+func (s *Service) SaveSettings(ctx context.Context, subscriber uuid.UUID, autoarchiveAfterDays int) error {
+	set, err := s.repo.GetFeedSettings(ctx, subscriber)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("get feed settings: %w", err)
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		set = &Settings{
+			SubscriberID: subscriber,
+		}
+	}
+
+	set.AutoarchiveAfterDays = autoarchiveAfterDays
+	if err = s.repo.StoreSettings(ctx, set); err != nil {
+		return fmt.Errorf("store settings: %w", err)
+	}
+
+	return nil
+}
