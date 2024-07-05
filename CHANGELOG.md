@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2024-07-05
+
 ### Added
 - Autoarchive feed item after voting on proposal
 - Consume settings updates
