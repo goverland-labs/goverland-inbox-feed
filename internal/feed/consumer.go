@@ -20,10 +20,14 @@ const (
 	executionTtl       = time.Minute
 )
 
+type closable interface {
+	Close() error
+}
+
 type Consumer struct {
-	conn     *nats.Conn
-	consumer *client.Consumer[inbox.FeedPayload]
-	service  *Service
+	conn      *nats.Conn
+	consumers []closable
+	service   *Service
 }
 
 func NewConsumer(conn *nats.Conn, service *Service) *Consumer {
@@ -42,18 +46,35 @@ func (c *Consumer) Start(ctx context.Context) error {
 		client.WithAckWait(executionTtl),
 	}
 
-	consumer, err := client.NewConsumer(ctx, c.conn, group, inbox.SubjectFeedUpdated, c.handler(), opts...)
+	cfu, err := client.NewConsumer(ctx, c.conn, group, inbox.SubjectFeedUpdated, c.handler(), opts...)
 	if err != nil {
 		return fmt.Errorf("consume for %s/%s: %w", group, inbox.SubjectFeedUpdated, err)
 	}
-	c.consumer = consumer
+	cvc, err := client.NewConsumer(ctx, c.conn, group, inbox.SubjectVoteCreated, c.handlerVoteCreated(), opts...)
+	if err != nil {
+		return fmt.Errorf("consume for %s/%s: %w", group, inbox.SubjectFeedUpdated, err)
+	}
+	fcc, err := client.NewConsumer(ctx, c.conn, group, inbox.SubjectFeedSettingsUpdated, c.handlerSettingsUpdated(), opts...)
+	if err != nil {
+		return fmt.Errorf("consume for %s/%s: %w", group, inbox.SubjectFeedSettingsUpdated, err)
+	}
+	c.consumers = append(c.consumers, cfu, cvc, fcc)
 
 	log.Info().Msg("feed consumer is started")
 
-	// todo: handle correct stopping the consumer by context
-
 	<-ctx.Done()
-	return c.consumer.Close()
+
+	return c.stop()
+}
+
+func (c *Consumer) stop() error {
+	for _, cs := range c.consumers {
+		if err := cs.Close(); err != nil {
+			log.Error().Err(err).Msg("close feed consumer")
+		}
+	}
+
+	return nil
 }
 
 func (c *Consumer) handler() inbox.FeedHandler {
@@ -62,6 +83,28 @@ func (c *Consumer) handler() inbox.FeedHandler {
 
 		if err := c.service.Process(context.TODO(), converted); err != nil {
 			log.Error().Err(err).Msgf("process item: %s", converted.ID)
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (c *Consumer) handlerVoteCreated() inbox.VoteHandler {
+	return func(payload inbox.VotePayload) error {
+		if err := c.service.TryAutoarchive(context.TODO(), payload.UserID, payload.ProposalID); err != nil {
+			log.Error().Err(err).Msgf("process voting: %s", payload.UserID)
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (c *Consumer) handlerSettingsUpdated() inbox.FeedSettingsHandler {
+	return func(payload inbox.FeedSettingsPayload) error {
+		if err := c.service.SaveSettings(context.TODO(), payload.SubscriberID, payload.AutoarchiveAfterDays); err != nil {
+			log.Error().Err(err).Msgf("process settings: %s", payload.SubscriberID)
 			return err
 		}
 
