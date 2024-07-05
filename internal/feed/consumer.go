@@ -62,9 +62,8 @@ func (c *Consumer) Start(ctx context.Context) error {
 
 	log.Info().Msg("feed consumer is started")
 
-	// todo: handle correct stopping the cfu by context
-
 	<-ctx.Done()
+
 	return c.stop()
 }
 

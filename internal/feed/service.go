@@ -254,7 +254,7 @@ func (s *Service) TryAutoarchive(ctx context.Context, userID uuid.UUID, proposal
 		return fmt.Errorf("get feed settings: %w", err)
 	}
 
-	// skip if it's disabled in user config
+	// skip if it's disabled by user config
 	if !set.GetFeedSettings().GetArchiveProposalAfterVote() {
 		return nil
 	}
