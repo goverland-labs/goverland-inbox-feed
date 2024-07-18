@@ -50,6 +50,25 @@ func FilterByArchivedStatus(status *bool) Filter {
 	}
 }
 
+func FilterByUnarchivedStatus(status *bool) Filter {
+	var (
+		dummy Item
+		_     = dummy.UnarchivedAt
+	)
+
+	return func(query *gorm.DB) *gorm.DB {
+		if status == nil {
+			return query
+		}
+
+		if *status {
+			return query.Where("unarchived_at is not null")
+		}
+
+		return query.Where("unarchived_at is null")
+	}
+}
+
 func FilterByReadStatus(status *bool) Filter {
 	var (
 		dummy Item
