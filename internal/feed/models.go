@@ -66,6 +66,7 @@ type Item struct {
 	DeletedAt    gorm.DeletedAt  `gorm:"index"`
 	ReadAt       *time.Time      `json:"read_at" gorm:"index"`
 	ArchivedAt   *time.Time      `json:"archived_at" gorm:"index"`
+	UnarchivedAt *time.Time      `json:"unarchived_at"`
 	DaoID        uuid.UUID       `json:"dao_id" gorm:"uniqueIndex:feed_item_dao_proposal_uidx"`
 	ProposalID   string          `json:"proposal_id" gorm:"uniqueIndex:feed_item_dao_proposal_uidx"`
 	DiscussionID string          `json:"discussion_id"`

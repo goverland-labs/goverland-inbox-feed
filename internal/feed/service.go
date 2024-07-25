@@ -262,6 +262,7 @@ func (s *Service) TryAutoarchive(ctx context.Context, userID uuid.UUID, proposal
 	items, err := s.repo.FindByFilters(ctx, []Filter{
 		FilterBySubscriberID(userID),
 		FilterByArchivedStatus(pointy.Bool(false)),
+		FilterByUnarchivedStatus(pointy.Bool(false)),
 		FilterByProposalID(proposalID),
 	})
 	if err != nil {

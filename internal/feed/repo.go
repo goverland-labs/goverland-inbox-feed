@@ -155,14 +155,15 @@ func (r *Repo) MarkAsArchivedByID(_ context.Context, subscriberID uuid.UUID, id 
 		dummy Item
 		_     = dummy.SubscriberID
 		_     = dummy.ArchivedAt
+		_     = dummy.UnarchivedAt
 	)
 
-	now := time.Now()
 	err := r.conn.
 		Model(&Item{}).
 		Where("subscriber_id = @subscriber_id", sql.Named("subscriber_id", subscriberID)).
 		Where("id in (@ids)", sql.Named("ids", id)).
-		Update("archived_at", now).
+		Update("archived_at", time.Now()).
+		Update("unarchived_at", gorm.Expr("NULL")).
 		Error
 
 	return err
@@ -173,6 +174,7 @@ func (r *Repo) MarkAsUnarchivedByID(_ context.Context, subscriberID uuid.UUID, i
 		dummy Item
 		_     = dummy.SubscriberID
 		_     = dummy.ArchivedAt
+		_     = dummy.UnarchivedAt
 	)
 
 	err := r.conn.
@@ -180,6 +182,7 @@ func (r *Repo) MarkAsUnarchivedByID(_ context.Context, subscriberID uuid.UUID, i
 		Where("subscriber_id = @subscriber_id", sql.Named("subscriber_id", subscriberID)).
 		Where("id in (@ids)", sql.Named("ids", id)).
 		Update("archived_at", gorm.Expr("NULL")).
+		Update("unarchived_at", time.Now()).
 		Error
 
 	return err

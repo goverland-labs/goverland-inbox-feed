@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Do not auto archive feed items marked as unarchived by user
+
 ## [0.1.0] - 2024-07-05
 
 ### Added
