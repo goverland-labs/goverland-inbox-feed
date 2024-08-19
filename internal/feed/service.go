@@ -49,42 +49,59 @@ func NewService(repo *Repo, subscriptions SubscriptionsFinder, sp SettingsProvid
 	}
 }
 
+// Process feed item based on subscriber list.
+// First of update proposal for already exists users and then try to add to the DAO subscribers.
 func (s *Service) Process(ctx context.Context, item Item) error {
 	// skip dao objects from feed
 	if item.DAO() {
 		return nil
 	}
 
+	processedSubscribers := make(map[uuid.UUID]struct{})
+	list, err := s.repo.FindByFilters(context.Background(), []Filter{
+		FilterByProposalID(item.ProposalID),
+	})
+	if err != nil {
+		return fmt.Errorf("find by filters: %w", err)
+	}
+
+	for i := range list {
+		personalized := item
+		personalized.SubscriberID = list[i].SubscriberID
+		if err = s.repo.CreateOrUpdate(&personalized); err != nil {
+			return fmt.Errorf("unable to save feed item '%s' for subscriber '%s': %w", personalized.ID, list[i].SubscriberID.String(), err)
+		}
+
+		processedSubscribers[list[i].SubscriberID] = struct{}{}
+	}
+
 	resp, err := s.subscriptions.FindSubscribers(ctx, &inboxapi.FindSubscribersRequest{
 		DaoId: item.DaoID.String(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("find subscribers: %w", err)
 	}
 
+	var prInfo ShortProposalInfo
+	err = json.Unmarshal(item.Snapshot, &prInfo)
+	if err != nil {
+		return fmt.Errorf("unmarshal snapshot: %w", err)
+	}
+
+	itemActive := prInfo.Active()
 	for _, sub := range resp.Users {
 		subscriberID, err := uuid.Parse(sub.GetUserId())
 		if err != nil {
 			return fmt.Errorf("unable to parse subscriber id '%s': %w", sub.GetUserId(), err)
 		}
 
-		var prInfo ShortProposalInfo
-		err = json.Unmarshal(item.Snapshot, &prInfo)
-		if err != nil {
-			return fmt.Errorf("unmarshal snapshot: %w", err)
-		}
-
-		list, err := s.repo.FindByFilters(context.Background(), []Filter{
-			FilterBySubscriberID(subscriberID),
-			FilterByProposalID(item.ProposalID),
-		})
-
-		if err != nil {
-			return fmt.Errorf("find by filters: %w", err)
+		// skip processed
+		if _, ok := processedSubscribers[subscriberID]; !ok {
+			continue
 		}
 
 		// do not add item if it already closed
-		if len(list) == 0 && !prInfo.Active() {
+		if !itemActive {
 			return nil
 		}
 
