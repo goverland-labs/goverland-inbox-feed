@@ -96,7 +96,7 @@ func (s *Service) Process(ctx context.Context, item Item) error {
 		}
 
 		// skip processed
-		if _, ok := processedSubscribers[subscriberID]; !ok {
+		if _, ok := processedSubscribers[subscriberID]; ok {
 			continue
 		}
 

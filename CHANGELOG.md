@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2024-08-23
+
+### Fixed
+- Skip processed subscribers on feed
+
 ## [0.1.2] - 2024-08-19
 
 ### Fixed
