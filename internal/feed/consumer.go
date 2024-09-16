@@ -197,6 +197,9 @@ var payloadActionMap = map[inbox.TimelineAction]Action{
 	inbox.ProposalVotingStarted:       ProposalVotingStarted,
 	inbox.ProposalVotingQuorumReached: ProposalVotingQuorumReached,
 	inbox.ProposalVotingEnded:         ProposalVotingEnded,
+	inbox.DelegateCreateProposal:      DelegateCreateProposal,
+	inbox.DelegateVotingVoted:         DelegateVotingVoted,
+	inbox.DelegateVotingSkipVote:      DelegateVotingSkipVote,
 }
 
 func actionWeight(a Action) int {
@@ -228,6 +231,8 @@ func convertPayloadTypeToInternal(t inbox.Type) Type {
 		return Dao
 	case inbox.TypeProposal:
 		return Proposal
+	case inbox.TypeDelegate:
+		return Delegate
 	default:
 	}
 

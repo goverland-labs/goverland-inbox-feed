@@ -14,6 +14,7 @@ import (
 const (
 	Dao      Type = "dao"
 	Proposal Type = "proposal"
+	Delegate Type = "delegate"
 
 	DaoCreated                  Action = "dao.created"
 	DaoUpdated                  Action = "dao.updated"
@@ -24,6 +25,9 @@ const (
 	ProposalVotingStarted       Action = "proposal.voting.started"
 	ProposalVotingQuorumReached Action = "proposal.voting.quorum_reached"
 	ProposalVotingEnded         Action = "proposal.voting.ended"
+	DelegateCreateProposal      Action = "delegate.proposal.created"
+	DelegateVotingVoted         Action = "delegate.voting.voted"
+	DelegateVotingSkipVote      Action = "delegate.voting.skip_vote"
 )
 
 type Type string
