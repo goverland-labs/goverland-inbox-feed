@@ -1,6 +1,6 @@
 module github.com/goverland-labs/goverland-inbox-feed
 
-go 1.21
+go 1.23
 
 require (
 	github.com/caarlos0/env/v8 v8.0.0

@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed go version in dockerfile and github actions
+
 ## [0.2.0] - 2024-11-01
 
 ### Added
