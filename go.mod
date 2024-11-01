@@ -1,4 +1,4 @@
-module github.com/goverland-labs/inbox-feed
+module github.com/goverland-labs/goverland-inbox-feed
 
 go 1.21
 

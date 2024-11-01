@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog/log"
 
-	"github.com/goverland-labs/inbox-feed/internal/config"
+	"github.com/goverland-labs/goverland-inbox-feed/internal/config"
 )
 
 const (

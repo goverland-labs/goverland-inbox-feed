@@ -16,11 +16,11 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/goverland-labs/inbox-feed/internal/config"
-	"github.com/goverland-labs/inbox-feed/internal/feed"
-	"github.com/goverland-labs/inbox-feed/pkg/grpcsrv"
-	"github.com/goverland-labs/inbox-feed/pkg/health"
-	"github.com/goverland-labs/inbox-feed/pkg/prometheus"
+	"github.com/goverland-labs/goverland-inbox-feed/internal/config"
+	"github.com/goverland-labs/goverland-inbox-feed/internal/feed"
+	"github.com/goverland-labs/goverland-inbox-feed/pkg/grpcsrv"
+	"github.com/goverland-labs/goverland-inbox-feed/pkg/health"
+	"github.com/goverland-labs/goverland-inbox-feed/pkg/prometheus"
 )
 
 type Application struct {
@@ -141,7 +141,7 @@ func (a *Application) initNats() error {
 }
 
 func (a *Application) initInboxAPI() error {
-	conn, err := grpc.Dial(a.cfg.Inbox.StorageAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(a.cfg.Inbox.StorageAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("create connection with storage server: %v", err)
 	}

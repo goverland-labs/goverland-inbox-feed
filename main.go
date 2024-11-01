@@ -5,8 +5,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/s-larionov/process-manager"
 
-	"github.com/goverland-labs/inbox-feed/internal"
-	"github.com/goverland-labs/inbox-feed/internal/config"
+	"github.com/goverland-labs/goverland-inbox-feed/internal"
+	"github.com/goverland-labs/goverland-inbox-feed/internal/config"
 )
 
 var cfg config.App

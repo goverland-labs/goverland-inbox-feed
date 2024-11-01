@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/goverland-labs/inbox-feed/pkg/helpers"
+	"github.com/goverland-labs/goverland-inbox-feed/pkg/helpers"
 )
 
 const defaultPageLimit = 100

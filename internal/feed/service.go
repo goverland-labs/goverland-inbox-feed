@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
-	"github.com/goverland-labs/inbox-feed/pkg/helpers"
+	"github.com/goverland-labs/goverland-inbox-feed/pkg/helpers"
 )
 
 const (
