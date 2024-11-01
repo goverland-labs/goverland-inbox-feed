@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	coresdk "github.com/goverland-labs/core-web-sdk"
-	"github.com/goverland-labs/core-web-sdk/feed"
-	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
+	coresdk "github.com/goverland-labs/goverland-core-sdk-go"
+	"github.com/goverland-labs/goverland-core-sdk-go/feed"
+	"github.com/goverland-labs/goverland-inbox-api-protocol/protobuf/inboxapi"
 	"github.com/rs/zerolog/log"
 	"go.openly.dev/pointy"
 	"google.golang.org/grpc"

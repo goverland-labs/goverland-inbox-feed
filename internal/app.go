@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	coresdk "github.com/goverland-labs/core-web-sdk"
+	coresdk "github.com/goverland-labs/goverland-core-sdk-go"
+	"github.com/goverland-labs/goverland-inbox-api-protocol/protobuf/inboxapi"
 	"github.com/goverland-labs/goverland-platform-events/pkg/natsclient"
-	"github.com/goverland-labs/inbox-api/protobuf/inboxapi"
 	"github.com/nats-io/nats.go"
 	"github.com/s-larionov/process-manager"
 	"google.golang.org/grpc"

@@ -6,9 +6,9 @@ require (
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.0
-	github.com/goverland-labs/core-web-sdk v0.0.14
+	github.com/goverland-labs/goverland-core-sdk-go v0.1.14
+	github.com/goverland-labs/goverland-inbox-api-protocol v0.3.0
 	github.com/goverland-labs/goverland-platform-events v0.2.7
-	github.com/goverland-labs/inbox-api v0.0.28
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/nats-io/nats.go v1.30.2
@@ -17,7 +17,7 @@ require (
 	github.com/s-larionov/process-manager v0.0.1
 	github.com/stretchr/testify v1.8.4
 	go.openly.dev/pointy v1.3.0
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.1
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.2
@@ -43,10 +43,10 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
